@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>政大下課吃什麼喝什麼？｜指南路美食綠洲決策器</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #f4ede4 100%);
+      --primary: #e05a47;
+      --primary-hover: #c94634;
+      --secondary: #1e3a5f;
+      --accent: #f2a65a;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --text-main: #2b2d42;
+      --text-muted: #6c757d;
+      --border-color: #e9ecef;
+      --shadow: 0 10px 30px rgba(30, 58, 95, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px 16px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .badge-nccu {
+      display: inline-block;
+      background: var(--secondary);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: var(--secondary);
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Card Shared Styles */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Mode Selector */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .mode-btn {
+      padding: 12px 10px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      background: #fff;
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .mode-btn.active {
+      background: var(--secondary);
+      color: #fff;
+      border-color: var(--secondary);
+      box-shadow: 0 4px 12px rgba(30, 58, 95, 0.25);
+    }
+
+    /* Filters */
+    .filter-group {
+      margin-bottom: 14px;
+    }
+
+    .filter-label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1.5px solid #dce1e7;
+      background: #fff;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .filter-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-color);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .reset-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 0.88rem;
+    }
+
+    /* Slot Machine Display */
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .slot-box {
+      background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .slot-box.highlight {
+      border-color: var(--primary);
+      box-shadow: 0 8px 24px rgba(224, 90, 71, 0.18);
+      transform: translateY(-3px);
+    }
+
+    .slot-box.disabled-slot {
+      opacity: 0.4;
+      filter: grayscale(0.8);
+    }
+
+    .slot-type-tag {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: #edf2f7;
+      color: var(--secondary);
+    }
+
+    .slot-emoji {
+      font-size: 3rem;
+      margin-bottom: 8px;
+      transition: transform 0.2s ease;
+    }
+
+    .slot-name {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--secondary);
+      margin-bottom: 10px;
+      min-height: 2.2rem;
+    }
+
+    .slot-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .meta-badge {
+      font-size: 0.8rem;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .slot-note {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(224, 90, 71, 0.1);
+      transition: background 0.2s;
+    }
+
+    .map-link:hover {
+      background: rgba(224, 90, 71, 0.2);
+    }
+
+    /* Main CTA Button */
+    .draw-btn {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #e05a47 0%, #f28444 100%);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(224, 90, 71, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .draw-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(224, 90, 71, 0.45);
+    }
+
+    .draw-btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .draw-btn:disabled {
+      background: #cbd5e1;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Two Column Bottom Layout */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+      .mode-tabs {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Add Store Form */
+    .add-form {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .add-form-row2 {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr auto;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .add-form, .add-form-row2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    input, select {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #dce1e7;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--text-main);
+    }
+
+    .add-btn {
+      padding: 10px 18px;
+      background: var(--secondary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .add-btn:hover {
+      background: #152945;
+    }
+
+    /* Store Tag List */
+    .store-list-wrap {
+      max-height: 290px;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .store-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .store-pill.excluded {
+      opacity: 0.45;
+      text-decoration: line-through;
+      background: #f1f5f9;
+    }
+
+    .store-pill .del-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.95rem;
+      margin-left: 2px;
+      line-height: 1;
+    }
+
+    .store-pill .del-btn:hover {
+      color: #ef4444;
+    }
+
+    /* History List */
+    .history-list {
+      list-style: none;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-time {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .empty-hint {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 24px 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="container">
+    <header>
+      <span class="badge-nccu">NCCU FOOD & DRINK PICKER</span>
+      <h1>政大下課吃什麼喝什麼？</h1>
+      <p class="subtitle">拯救指南路選擇障礙！支援正餐＋手搖甜點雙重抽籤、地段與預算篩選</p>
+    </header>
+
+    <!-- Step 1: 篩選與模式設定 -->
+    <section class="card">
+      <div class="section-title">
+        <span>🎯 Step 1：選擇抽籤模式與篩選條件</span>
+        <button class="reset-link" id="reset-filters-btn">重設所有篩選</button>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-btn active" data-mode="both">🍱+🧋 吃喝全餐搭配</button>
+        <button class="mode-btn" data-mode="food">🍜 只抽正餐吃什麼</button>
+        <button class="mode-btn" data-mode="drink">🥤 只抽飲料／點心</button>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">📍 你現在下課想走去哪一區？（可複選，不選代表全區）</span>
+        <div class="chips-wrap" id="area-chips">
+          <button class="chip" data-value="校門口/指南路">校門口／指南路</button>
+          <button class="chip" data-value="新光路/大門右側">新光路／大門右側</button>
+          <button class="chip" data-value="側門/小公寓巷弄">側門／小公寓巷弄</button>
+          <button class="chip" data-value="後山/其他">後山／校內其他</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">💰 預算範圍？（可複選，不選代表不限）</span>
+        <div class="chips-wrap" id="budget-chips">
+          <button class="chip" data-value="銅板價">🪙 銅板月底救星 (100元內)</button>
+          <button class="chip" data-value="日常">💵 日常吃飽 (100~180元)</button>
+          <button class="chip" data-value="吃好點">✨ 今天吃好點 (180元以上)</button>
+        </div>
+      </div>
+
+      <div class="filter-status">
+        <span id="pool-count-text">目前符合條件：計算中...</span>
+        <span>💡 小提示：下方口袋名單點擊店名可暫時「排除今日公休」</span>
+      </div>
+    </section>
+
+    <!-- Step 2: 雙重拉霸抽籤區 -->
+    <section class="card">
+      <div class="section-title">
+        <span>🎰 Step 2：下課命定組合揭曉</span>
+      </div>
+
+      <div class="slot-grid">
+        <!-- 正餐卡槽 -->
+        <div class="slot-box" id="food-slot">
+          <span class="slot-type-tag">🍱 正餐主食</span>
+          <div class="slot-emoji" id="food-emoji">🍜</div>
+          <div class="slot-name" id="food-name">準備開抽！</div>
+          <div class="slot-meta" id="food-meta">
+            <span class="meta-badge">政大周邊</span>
+            <span class="meta-badge">正餐推薦</span>
+          </div>
+          <p class="slot-note" id="food-note">按下下方按鈕，立刻解決午餐／晚餐難題</p>
+          <a href="#" target="_blank" rel="noopener" class="map-link" id="food-map" style="display: none;">
+            📍 在 Google Maps 查看位置
+          </a>
+        </div>
+
+        <!-- 飲料點心卡槽 -->
+        <div class="slot-box" id="drink-slot">
+          <span class="slot-type-tag">🧋 飲料／甜點下午茶</span>
+          <div class="slot-emoji" id="drink-emoji">🧋</div>
+          <div class="slot-name" id="drink-name">配杯什麼好？</div>
+          <div class="slot-meta" id="drink-meta">
+            <span class="meta-badge">手搖／咖啡／豆花</span>
+          </div>
+          <p class="slot-note" id="drink-note">下課怎能少了手搖飲跟甜點療癒一下</p>
+          <a href="#" target="_blank" rel="noopener" class="map-link" id="drink-map" style="display: none;">
+            📍 在 Google Maps 查看位置
+          </a>
+        </div>
+      </div>
+
+      <button class="draw-btn" id="draw-btn">🎲 幫我決定下課吃什麼喝什麼！</button>
+    </section>
+
+    <!-- Step 3: 口袋名單管理與歷史紀錄 -->
+    <div class="bottom-grid">
+      <section class="card">
+        <div class="section-title">
+          <span>📖 政大口袋名單管理</span>
+          <button class="reset-link" id="restore-default-btn">還原預設店家</button>
+        </div>
+
+        <div class="add-form">
+          <input type="text" id="new-name" placeholder="輸入店名（如：私房牛肉麵）" />
+          <select id="new-kind">
+            <option value="food">🍱 正餐主食</option>
+            <option value="drink">🧋 飲料／點心</option>
+          </select>
+          <select id="new-area">
+            <option value="校門口/指南路">校門口／指南路</option>
+            <option value="新光路/大門右側">新光路／大門右側</option>
+            <option value="側門/小公寓巷弄">側門／小公寓巷弄</option>
+            <option value="後山/其他">後山／校內其他</option>
+          </select>
+        </div>
+        <div class="add-form-row2">
+          <select id="new-budget">
+            <option value="銅板價">🪙 銅板價 (100內)</option>
+            <option value="日常">💵 日常 (100~180)</option>
+            <option value="吃好點">✨ 吃好點 (180+)</option>
+          </select>
+          <input type="text" id="new-note" placeholder="招牌必點或備註（選填）" />
+          <button class="add-btn" id="add-store-btn">＋ 新增愛店</button>
+        </div>
+
+        <div class="store-list-wrap" id="store-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <span>🕒 本次抽籤歷史紀錄</span>
+          <button class="reset-link" id="clear-history-btn">清空紀錄</button>
+        </div>
+        <ul class="history-list" id="history-list">
+          <li class="empty-hint">尚未抽籤，快按下上方按鈕試試手氣吧！</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // 預設政大經典美食與飲品資料庫
+    const DEFAULT_STORES = [
+      // 正餐 (Food)
+      { id: 1, name: "佳味涼麵", kind: "food", area: "校門口/指南路", budget: "銅板價", emoji: "🥒", note: "必點炸醬涼麵＋味噌三合一湯", active: true },
+      { id: 2, name: "金鰭日式料理", kind: "food", area: "校門口/指南路", budget: "日常", emoji: "🍣", note: "政大人回憶！起司豬排丼、鮭魚丼", active: true },
+      { id: 3, name: "波波恰恰大馬風味飯", kind: "food", area: "側門/小公寓巷弄", budget: "日常", emoji: "🍛", note: "海南雞飯、巴東牛肉＋免費例湯", active: true },
+      { id: 4, name: "喜記燒臘", kind: "food", area: "校門口/指南路", budget: "日常", emoji: "🍖", note: "脆皮燒肉、油雞腿飯，油蔥超香", active: true },
+      { id: 5, name: "敏忠快餐", kind: "food", area: "校門口/指南路", budget: "日常", emoji: "🍱", note: "高CP值排骨飯、雞腿飯配菜豐富", active: true },
+      { id: 6, name: "左撇子日常料理", kind: "food", area: "新光路/大門右側", budget: "日常", emoji: "🍳", note: "椒麻雞飯、打拋豬，環境乾淨舒適", active: true },
+      { id: 7, name: "樂山食堂", kind: "food", area: "新光路/大門右側", budget: "日常", emoji: "🍤", note: "日式豬排定食、咖哩飯，白飯吃到飽", active: true },
+      { id: 8, name: "滇味廚房", kind: "food", area: "校門口/指南路", budget: "日常", emoji: "🍜", note: "過橋米線、紹子米線、破酥包", active: true },
+      { id: 9, name: "東京小城", kind: "food", area: "側門/小公寓巷弄", budget: "日常", emoji: "🍛", note: "歐姆蛋咖哩飯、炸豬排定食", active: true },
+      { id: 10, name: "小曼谷泰式料理", kind: "food", area: "校門口/指南路", budget: "吃好點", emoji: "🌶️", note: "適合跟同學聚餐！綠咖哩、月亮蝦餅", active: true },
+      { id: 11, name: "四川飯館", kind: "food", area: "校門口/指南路", budget: "吃好點", emoji: "🥘", note: "宮保雞丁、麻婆豆腐，下課聚餐首選", active: true },
+      { id: 12, name: "八方雲集 (政大店)", kind: "food", area: "校門口/指南路", budget: "銅板價", emoji: "🥟", note: "招牌鍋貼、韓式辣味鍋貼配酸辣湯", active: true },
+      { id: 13, name: "麥當勞 (政大指南店)", kind: "food", area: "校門口/指南路", budget: "日常", emoji: "🍔", note: "討論報告與趕作業的永遠好夥伴", active: true },
+      { id: 14, name: "四五大街", kind: "food", area: "側門/小公寓巷弄", budget: "日常", emoji: "🍝", note: "雞腿排義大利麵、濃湯飲料自助", active: true },
+
+      // 飲料與甜點 (Drink & Dessert)
+      { id: 101, name: "明池豆花", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🥣", note: "政大必吃粉圓花生豆花、黑糖刨冰", active: true },
+      { id: 102, name: "得正 #政大指南Project", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🧋", note: "輕烏龍鮮奶、檸檬春烏龍解膩首選", active: true },
+      { id: 103, name: "廢墟咖啡 Ruin Cafe", kind: "drink", area: "側門/小公寓巷弄", budget: "日常", emoji: "☕", note: "不限時工業風咖啡廳，手沖與肉桂捲讚", active: true },
+      { id: 104, name: "50嵐 (政大店)", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🥤", note: "1號四季春珍波椰、波霸紅茶拿鐵", active: true },
+      { id: 105, name: "迷客夏 Milksha", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🐄", note: "大甲芋頭鮮奶、珍珠紅茶拿鐵", active: true },
+      { id: 106, name: "可不可熟成紅茶", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🍹", note: "白玉歐蕾、胭脂紅茶清爽解渴", active: true },
+      { id: 107, name: "小公寓 Apt.Cafe", kind: "drink", area: "側門/小公寓巷弄", budget: "吃好點", emoji: "🍰", note: "二樓復古採光咖啡廳，下午茶讀書超Chill", active: true },
+      { id: 108, name: "麻古茶坊", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🥭", note: "金萱雙Q、柳橙果粒茶", active: true },
+      { id: 109, name: "Louisa 路易莎咖啡", kind: "drink", area: "校門口/指南路", budget: "銅板價", emoji: "🥯", note: "莊園拿鐵＋磚壓吐司，期中考週救星", active: true },
+      { id: 110, name: "政大總圖／後山全家霜淇淋", kind: "drink", area: "後山/其他", budget: "銅板價", emoji: "🍦", note: "下課順手來一支最新口味霜淇淋", active: true }
+    ];
+
+    const STORAGE_KEY = "nccu_food_picker_stores_v1";
+    let stores = [];
+    let currentMode = "both"; // 'both' | 'food' | 'drink'
+    let selectedAreas = new Set();
+    let selectedBudgets = new Set();
+    let isDrawing = false;
+
+    // 初始化讀取 LocalStorage
+    function loadStores() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          stores = JSON.parse(saved);
+        } catch (e) {
+          stores = JSON.parse(JSON.stringify(DEFAULT_STORES));
+        }
+      } else {
+        stores = JSON.parse(JSON.stringify(DEFAULT_STORES));
+      }
+    }
+
+    function saveStores() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stores));
+    }
+
+    // 篩選符合條件的店家
+    function getFilteredPools() {
+      const activeStores = stores.filter(s => s.active);
+      const matchFilter = (item) => {
+        const areaOk = selectedAreas.size === 0 || selectedAreas.has(item.area);
+        const budgetOk = selectedBudgets.size === 0 || selectedBudgets.has(item.budget);
+        return areaOk && budgetOk;
+      };
+      return {
+        foods: activeStores.filter(s => s.kind === "food" && matchFilter(s)),
+        drinks: activeStores.filter(s => s.kind === "drink" && matchFilter(s))
+      };
+    }
+
+    // 更新畫面上的候選數量與按鈕狀態
+    function updateStatusUI() {
+      const { foods, drinks } = getFilteredPools();
+      const countEl = document.getElementById("pool-count-text");
+      countEl.textContent = `目前符合條件：🍱 正餐 ${foods.length} 間 ｜ 🧋 飲品點心 ${drinks.length} 間`;
+
+      const foodSlot = document.getElementById("food-slot");
+      const drinkSlot = document.getElementById("drink-slot");
+
+      foodSlot.classList.toggle("disabled-slot", currentMode === "drink");
+      drinkSlot.classList.toggle("disabled-slot", currentMode === "food");
+    }
+
+    // 渲染口袋名單標籤
+    function renderStoreList() {
+      const wrap = document.getElementById("store-list");
+      wrap.innerHTML = "";
+      stores.forEach(item => {
+        const pill = document.createElement("div");
+        pill.className = `store-pill ${item.active ? "" : "excluded"}`;
+        pill.title = "點擊切換：啟用／今日暫時排除";
+        pill.innerHTML = `
+          <span>${item.emoji} ${item.name}</span>
+          <button class="del-btn" title="刪除此店家" data-id="${item.id}">×</button>
+        `;
+        pill.addEventListener("click", (e) => {
+          if (e.target.classList.contains("del-btn")) return;
+          item.active = !item.active;
+          saveStores();
+          renderStoreList();
+          updateStatusUI();
+        });
+        pill.querySelector(".del-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          stores = stores.filter(s => s.id !== item.id);
+          saveStores();
+          renderStoreList();
+          updateStatusUI();
+        });
+        wrap.appendChild(pill);
+      });
+    }
+
+    // 更新單一卡槽內容
+    function renderSlot(prefix, item, isFinal = false) {
+      const box = document.getElementById(`${prefix}-slot`);
+      const emojiEl = document.getElementById(`${prefix}-emoji`);
+      const nameEl = document.getElementById(`${prefix}-name`);
+      const metaEl = document.getElementById(`${prefix}-meta`);
+      const noteEl = document.getElementById(`${prefix}-note`);
+      const mapEl = document.getElementById(`${prefix}-map`);
+
+      if (!item) {
+        emojiEl.textContent = "😢";
+        nameEl.textContent = "無符合條件店家";
+        metaEl.innerHTML = `<span class="meta-badge">請放寬篩選條件</span>`;
+        noteEl.textContent = "試著取消部分地區或預算限制吧！";
+        mapEl.style.display = "none";
+        box.classList.remove("highlight");
+        return;
+      }
+
+      emojiEl.textContent = item.emoji || "🍴";
+      nameEl.textContent = item.name;
+      metaEl.innerHTML = `
+        <span class="meta-badge">📍 ${item.area}</span>
+        <span class="meta-badge">💰 ${item.budget}</span>
+      `;
+      noteEl.textContent = item.note || "政大人氣推薦好店！";
+
+      if (isFinal) {
+        box.classList.add("highlight");
+        mapEl.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("政大 " + item.name)}`;
+        mapEl.style.display = "inline-flex";
+      } else {
+        box.classList.remove("highlight");
+        mapEl.style.display = "none";
+      }
+    }
+
+    // 新增歷史紀錄
+    function addHistoryRecord(foodWinner, drinkWinner) {
+      const list = document.getElementById("history-list");
+      const emptyHint = list.querySelector(".empty-hint");
+      if (emptyHint) emptyHint.remove();
+
+      const now = new Date();
+      const timeStr = now.toTimeString().slice(0, 5);
+      let textParts = [];
+      if (foodWinner) textParts.push(`${foodWinner.emoji} ${foodWinner.name}`);
+      if (drinkWinner) textParts.push(`${drinkWinner.emoji} ${drinkWinner.name}`);
+
+      const li = document.createElement("li");
+      li.className = "history-item";
+      li.innerHTML = `
+        <strong>${textParts.join(" ＋ ")}</strong>
+        <span class="history-time">${timeStr}</span>
+      `;
+      list.prepend(li);
+    }
+
+    // 執行拉霸抽籤動畫
+    function startDraw() {
+      if (isDrawing) return;
+      const { foods, drinks } = getFilteredPools();
+
+      const needFood = currentMode === "both" || currentMode === "food";
+      const needDrink = currentMode === "both" || currentMode === "drink";
+
+      if ((needFood && foods.length === 0) && (needDrink && drinks.length === 0)) {
+        if (needFood) renderSlot("food", null, true);
+        if (needDrink) renderSlot("drink", null, true);
+        return;
+      }
+
+      isDrawing = true;
+      const drawBtn = document.getElementById("draw-btn");
+      drawBtn.disabled = true;
+      drawBtn.textContent = "🎰 指南路美食雷達搜尋中...";
+
+      let ticks = 0;
+      const maxTicks = 16;
+      const interval = setInterval(() => {
+        ticks++;
+        if (needFood && foods.length > 0) {
+          const tempFood = foods[Math.floor(Math.random() * foods.length)];
+          renderSlot("food", tempFood, false);
+        }
+        if (needDrink && drinks.length > 0) {
+          const tempDrink = drinks[Math.floor(Math.random() * drinks.length)];
+          renderSlot("drink", tempDrink, false);
+        }
+
+        if (ticks >= maxTicks) {
+          clearInterval(interval);
+          const finalFood = (needFood && foods.length > 0) ? foods[Math.floor(Math.random() * foods.length)] : null;
+          const finalDrink = (needDrink && drinks.length > 0) ? drinks[Math.floor(Math.random() * drinks.length)] : null;
+
+          if (needFood) renderSlot("food", finalFood, true);
+          if (needDrink) renderSlot("drink", finalDrink, true);
+
+          addHistoryRecord(finalFood, finalDrink);
+          fireConfetti();
+
+          isDrawing = false;
+          drawBtn.disabled = false;
+          drawBtn.textContent = "🎲 不滿意？再轉一次換一家！";
+        }
+      }, 65);
+    }
+
+    // 簡易 Canvas 慶祝紙花特效
+    function fireConfetti() {
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = Array.from({ length: 65 }, () => ({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 14,
+        vy: Math.random() * -14 - 4,
+        size: Math.random() * 8 + 5,
+        color: ["#e05a47", "#1e3a5f", "#f2a65a", "#2a9d8f", "#e9c46a"][Math.floor(Math.random() * 5)],
+        rot: Math.random() * 360,
+        vRot: (Math.random() - 0.5) * 12
+      }));
+
+      let frame = 0;
+      function animate() {
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.45; // gravity
+          p.rot += p.vRot;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+        if (frame < 75) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    // 事件綁定
+    function initEvents() {
+      // 模式切換
+      document.querySelectorAll(".mode-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentMode = btn.dataset.mode;
+          updateStatusUI();
+        });
+      });
+
+      // 區域篩選 Chips
+      document.querySelectorAll("#area-chips .chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          const val = chip.dataset.value;
+          if (selectedAreas.has(val)) {
+            selectedAreas.delete(val);
+            chip.classList.remove("active");
+          } else {
+            selectedAreas.add(val);
+            chip.classList.add("active");
+          }
+          updateStatusUI();
+        });
+      });
+
+      // 預算篩選 Chips
+      document.querySelectorAll("#budget-chips .chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          const val = chip.dataset.value;
+          if (selectedBudgets.has(val)) {
+            selectedBudgets.delete(val);
+            chip.classList.remove("active");
+          } else {
+            selectedBudgets.add(val);
+            chip.classList.add("active");
+          }
+          updateStatusUI();
+        });
+      });
+
+      // 重設篩選
+      document.getElementById("reset-filters-btn").addEventListener("click", () => {
+        selectedAreas.clear();
+        selectedBudgets.clear();
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        updateStatusUI();
+      });
+
+      // 抽籤按鈕
+      document.getElementById("draw-btn").addEventListener("click", startDraw);
+
+      // 新增自訂店家
+      document.getElementById("add-store-btn").addEventListener("click", () => {
+        const nameInput = document.getElementById("new-name");
+        const kindSelect = document.getElementById("new-kind");
+        const areaSelect = document.getElementById("new-area");
+        const budgetSelect = document.getElementById("new-budget");
+        const noteInput = document.getElementById("new-note");
+
+        const name = nameInput.value.trim();
+        if (!name) {
+          alert("請輸入店家名稱喔！");
+          return;
+        }
+
+        const kind = kindSelect.value;
+        const newStore = {
+          id: Date.now(),
+          name,
+          kind,
+          area: areaSelect.value,
+          budget: budgetSelect.value,
+          emoji: kind === "food" ? "🍽️" : "🥤",
+          note: noteInput.value.trim() || "自己新增的政大私房愛店！",
+          active: true
+        };
+
+        stores.unshift(newStore);
+        saveStores();
+        renderStoreList();
+        updateStatusUI();
+
+        nameInput.value = "";
+        noteInput.value = "";
+      });
+
+      // 還原預設店家
+      document.getElementById("restore-default-btn").addEventListener("click", () => {
+        if (confirm("確定要還原成預設的 24 間政大店家名單嗎？")) {
+          stores = JSON.parse(JSON.stringify(DEFAULT_STORES));
+          saveStores();
+          renderStoreList();
+          updateStatusUI();
+        }
+      });
+
+      // 清空歷史紀錄
+      document.getElementById("clear-history-btn").addEventListener("click", () => {
+        document.getElementById("history-list").innerHTML = `<li class="empty-hint">尚未抽籤，快按下上方按鈕試試手氣吧！</li>`;
+      });
+    }
+
+    // 啟動應用
+    loadStores();
+    renderStoreList();
+    updateStatusUI();
+    initEvents();
+  </script>
+</body>
+</html>
